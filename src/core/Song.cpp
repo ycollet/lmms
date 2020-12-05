@@ -22,6 +22,8 @@
  *
  */
 
+
+
 #include "Song.h"
 #include <QTextStream>
 #include <QCoreApplication>
@@ -34,6 +36,7 @@
 #include <cmath>
 #include <functional>
 
+#include "AudioJack.h"
 #include "AutomationTrack.h"
 #include "AutomationEditor.h"
 #include "BBEditor.h"
@@ -113,6 +116,8 @@ Song::Song() :
 /*	connect( &m_masterPitchModel, SIGNAL( dataChanged() ),
 			this, SLOT( masterPitchChanged() ) );*/
 
+	connect( this, SIGNAL( playbackStateChanged() ), this, SLOT( onPlaybackStateChanged() ) );
+
 	qRegisterMetaType<Note>( "Note" );
 	setType( SongContainer );
 }
@@ -127,7 +132,15 @@ Song::~Song()
 }
 
 
-
+void Song::onPlaybackStateChanged()
+{
+	#ifdef LMMS_HAVE_JACK
+	AudioJack *device = dynamic_cast<AudioJack*>(Engine::mixer()->audioDev());
+	if (device) {
+		device->syncTransport(m_playing);
+	}
+	#endif
+}
 
 void Song::masterVolumeChanged()
 {
